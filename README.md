@@ -10,11 +10,11 @@ Then enter directory by
 ```
 cd dispel4py-client
 ```
-Download the dispel4py.tar file into directory
+Download the dispel4py.tar file into directory (If you have already created a conda enviroment then `conda activate py37` and skip to `Test dispel4py`)
 ```
 https://drive.google.com/file/d/1rvgJSkCdiK-yEzmnHsw_RkW8B1dBewa5/view
 ```
-In order to run the application you need to creatre a new Python 3.7 enviroment (If you have already completed this then skip to test dispel4py)
+In order to run the application you need to creatre a new Python 3.7 enviroment 
 ```
 --note conda must be installed beforehand, go to https://conda.io/projects/conda/en/stable/user-guide/install/linux.html
 conda create --name py37 python=3.7

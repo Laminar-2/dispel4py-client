@@ -1,1 +1,1 @@
-jsonpickle
+typing == 3.7.4.3

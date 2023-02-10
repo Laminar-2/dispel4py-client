@@ -7,10 +7,60 @@ import cloudpickle as pickle
 import codecs
 import json 
 import logging
+import inspect 
+import subprocess
 from enum import Enum
+import os 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(message)s', level=logging.INFO) 
+
+def create_import_string(pe_source_code: str):
+     #write source code to file
+    text_file = open("imports.py", "w")
+    text_file.write(pe_source_code)
+    text_file.close()
+
+    #call find imports on file 
+    output = subprocess.check_output("findimports -n imports.py",shell=True).decode()
+    pe_imports = output.splitlines()
+    del pe_imports[0]
+    pe_imports = [s.strip().split('.', 1)[0] for s in pe_imports]
+
+    #convert to string for ease 
+    pe_imports = ','.join(pe_imports)
+
+    return pe_imports
+
+def serialize_directory(path):
+
+    if path == None:
+        return get_payload(None)
+
+    data = {}
+
+    for item in os.listdir(path):
+        item_path = os.path.join(path,item)
+
+        if os.path.isfile(item_path):
+
+            with open(item_path, 'r') as f:
+             file_contents = f.read()
+
+            data[item] = {
+                "type": "file",
+                "size": os.path.getsize(item_path),
+                "content": file_contents
+            }
+
+        elif os.path.isdir(item_path):
+
+            data[item] = {
+                "type":"directory",
+                "contents": serialize_directory(item_path)
+            }
+    
+    return get_payload(data)
 
 def get_payload(code: any):
 
@@ -59,18 +109,22 @@ class PERegistrationData:
 
         if pe is not None: 
             pe_name = pe.__class__.__name__
-            pe_code = get_payload(pe)
+            
+        pe_source_code = inspect.getsource(pe.__class__)
 
         self.pe_name = pe_name 
-        self.pe_code = pe_code 
+        self.pe_code = get_payload(pe)
         self.description = description
-
+        self.pe_source_code = pe_source_code
+        self.pe_imports = create_import_string(pe_source_code)
 
     def to_dict(self):
         return {
             "peName": self.pe_name,
             "peCode": self.pe_code,
+            "sourceCode":self.pe_source_code, 
             "description": self.description,
+            "peImports": self.pe_imports
         }
 
     def __str__(self):
@@ -129,15 +183,24 @@ class ExecutionData:
         workflow_code: WorkflowGraph, 
         input: any,
         process: Process,
-        args: any
-    ):
+        args: any,
+        resources:str 
+    ):  
 
+        if workflow_code is not None:
+            #create import string 
+            imports = ""
+            for pe in workflow_code.getContainedObjects():
+                imports = imports + "," + create_import_string(inspect.getsource(pe.__class__))
+        
         self.workflow_id = workflow_id 
         self.workflow_name = workflow_name 
         self.input = get_payload(input)
         self.workflow_code = get_payload(workflow_code)
         self.args = get_payload(args)
         self.process = process.value
+        self.resources = serialize_directory(resources)
+        self.imports = imports
      
     def to_dict(self):
         return {
@@ -146,7 +209,9 @@ class ExecutionData:
             "workflowCode": self.workflow_code,
             "inputCode": self.input,
             "process": self.process,
-            "args": self.args
+            "args": self.args,
+            "resources": self.resources,
+            "imports": self.imports
         }
 
     def __str__(self):
@@ -209,7 +274,7 @@ class WebClient:
 
             #Link PEs to Workflow 
             for pe_obj in workflow_payload.workflow_pes:
-     
+
                 get_pe_url = URL_GET_PE_NAME + pe_obj.name 
                 pe_res = req.get(url=get_pe_url)
                 pe_res = json.loads(pe_res.text)

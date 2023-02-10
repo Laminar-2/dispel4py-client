@@ -3,13 +3,14 @@ from globals import *
 from dispel4py.base import *
 from dispel4py.workflow_graph import WorkflowGraph
 from dispel4py.visualisation import display
-from typing import Literal, get_args
+#from typing import Literal, get_args
 from typing_extensions import Literal, get_args
 from web_client import WebClient
-#from typing import Union
+from typing import Union
 
 _TYPES = Literal["pe", "workflow", "both"]
 
+ 
 class d4pClient:
 
     """Class to interact with registry 
@@ -68,7 +69,7 @@ class d4pClient:
 
         return WebClient.register_Workflow(self,data)
 
-    def run(self,workflow:Union[str,int,WorkflowGraph],input=None,process=Process.SIMPLE,args=None):
+    def run(self,workflow:Union[str,int,WorkflowGraph],input=None,process=Process.SIMPLE,args=None,resources:bool=False):
 
         """Execute a Workflow with the client service 
 
@@ -79,7 +80,9 @@ class d4pClient:
         input: any 
                 Input to execute 
         process: Process (Simple/Multi/Dynamic) 
-                Execution method 
+                Execution method
+        resources: bool 
+                If require resources for workflow execution 
         Return 
         -------
         result: str
@@ -97,7 +100,7 @@ class d4pClient:
            workflow_id = workflow
         elif isinstance(workflow, WorkflowGraph): # Graph 
            workflow_code = workflow 
-
+          
         if input is None:
             #todo do something
             None
@@ -105,13 +108,19 @@ class d4pClient:
         if args is None and (process == 2 or process == 3):
             assert 'Must provide ''args'' for Multi\Dynamic process'
 
+        if resources is True: 
+            resources_path = "resources/"
+        else: 
+            resources_path = None
+        
         data = ExecutionData(
             workflow_id = workflow_id,
             workflow_name = workflow_name,
             workflow_code = workflow_code,
             input = input,
             process = process,
-            args = args
+            args = args,
+            resources = resources_path
         )
         
         return WebClient.run(self,data)
@@ -246,8 +255,8 @@ class d4pClient:
         
         return WebClient.get_PEs_By_Workflow(workflow)
 
-
     def get_Registry(self):
 
         return WebClient.get_Registry()
+    
     

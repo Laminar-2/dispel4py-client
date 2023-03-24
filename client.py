@@ -9,7 +9,6 @@ from web_client import WebClient
 from typing import Union
 
 _TYPES = Literal["pe", "workflow", "both"]
-
  
 class d4pClient:
 
@@ -19,6 +18,52 @@ class d4pClient:
     def __init__(self):
         None
     
+    def register(self, user_name:str, user_password:str):
+        """ Register a user with the Registry service 
+
+        Parameters
+        ----------
+        user_name:str
+            Username
+        user_password: str
+            User password
+
+        Return 
+        ------
+        user_name: str
+            Username
+        """
+
+        data = AuthenticationData(
+            user_name=user_name,
+            user_password=user_password
+        )
+
+        return WebClient.register_User(self,data)
+
+    def login(self,user_name:str,user_password:str):
+        """Login user to use Register service 
+
+        Parameters
+        ----------
+        user_name:str
+            Username
+        user_password: str
+            User password
+
+        Return 
+        ------
+        user_name: str
+            Username
+        """
+        
+        data = AuthenticationData(
+            user_name=user_name,
+            user_password=user_password
+        )
+
+        return WebClient.login_User(self,data)
+     
     def register_PE(self,pe: PE_TYPES,description:str=None):
 
         """Register a PE with the client service
@@ -167,7 +212,7 @@ class d4pClient:
         workflow_obj = WebClient.get_Workflow(self,workflow)
         
         if describe and workflow_obj:
-            WebClient.describe(workflow)
+            WebClient.describe(self,workflow)
 
         return workflow_obj
     
@@ -208,15 +253,12 @@ class d4pClient:
                 Object to describe 
         """
 
-        if not isinstance(obj,WorkflowGraph) or not isinstance(obj,PE_TYPES):
-            assert 'Not a Workflow or PE Type'
-
         if isinstance(obj,WorkflowGraph):
             
             workflow_pes = [o.name for o in obj.getContainedObjects()] 
 
             print("PEs in Workflow: ", workflow_pes)
-            display(obj)
+            #display(obj)
            
         elif isinstance(obj,PE_TYPES):
             
@@ -253,10 +295,10 @@ class d4pClient:
 
     def get_PEs_By_Workflow(self,workflow:Union[str,int]):
         
-        return WebClient.get_PEs_By_Workflow(workflow)
+        return WebClient.get_PEs_By_Workflow(self,workflow)
 
     def get_Registry(self):
 
-        return WebClient.get_Registry()
+        return WebClient.get_Registry(self)
     
     

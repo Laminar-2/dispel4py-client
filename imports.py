@@ -1,14 +1,10 @@
-class ReadRaDec(GenericPE):
+class SplitWords(IterativePE):
 
     def __init__(self):
-        GenericPE.__init__(self)
-        self._add_output('output')
-    def _process(self, inputs):
-        file = inputs['input']
-        print('Reading file %s' % file)
-        with open(file) as f:
-            count = 0
-            for line in f:
-                count+= 1
-                ra, dec = line.strip().split(',')
-                self.write('output', [count, ra, dec, 0.001])
+        IterativePE.__init__(self)
+        
+    def _process(self, data):
+        import os 
+        #print("!!!SplitWords self.id %s, rankid %s, process.rank %s" % (self.id, os.getpid(), self.rank))	
+        for word in data.split(" "):
+            self.write("output", (word,1))

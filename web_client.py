@@ -2,6 +2,7 @@
 from dispel4py.workflow_graph import WorkflowGraph 
 from typing import Union
 from globals import *
+import globals
 import requests as req
 import cloudpickle as pickle 
 import codecs
@@ -14,6 +15,12 @@ import os
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(message)s', level=logging.INFO) 
+
+def verify_login():
+
+    if globals.CLIENT_AUTH_ID == "None":
+        logger.info("You must be logged-in to perform this operation.")
+        exit()
 
 def create_import_string(pe_source_code: str):
      #write source code to file
@@ -72,22 +79,50 @@ def get_objects(results):
 
     objectList = []
 
+    print("\nREGISTRY\n")
+
     #todo:check if list is empty 
     for index, result in enumerate(results,start=1):
 
+        desc = result['description']
+
+        if desc is None:
+                desc = "-"
+
         if 'workflowName' in result.keys():
-            workflow = "Result " + str(index) + ": " + "ID: " + str(result['workflowId']) + "\n" + + "Description: " + result['description'] + "\n"
+            workflow = "Result " + str(index) + ": " + "ID: " + str(result['workflowId']) + "\n" + "Workflow Name: " + result['entryPoint'] + "\n" + "Description: " + desc + "\n"
             obj = pickle.loads(codecs.decode(result['workflowCode'].encode(), "base64")) 
             print(workflow)
         else:
             pe_name = result['peName']
-            pe = "Result " + str(index) + ": " + "ID: " + str(result['peId']) + "\n" + "PE Name: " +pe_name + "\n" + "Description: " + result['description'] +"\n"
+            pe = "Result " + str(index) + ": " + "ID: " + str(result['peId']) + "\n" + "PE Name: " +pe_name + "\n" + "Description: " + desc +"\n"
             obj = pickle.loads(codecs.decode(result['peCode'].encode(), "base64"))
             print(pe)
 
         objectList.append(obj)
     
     return objectList
+
+class AuthenticationData:
+    
+    def __init__(
+        self,
+        *,
+        user_name: str,
+        user_password:str
+    ):
+    
+        self.user_name = user_name
+        self.user_password = user_password 
+
+    def to_dict(self):
+        return {
+            "userName": self.user_name,
+            "password": self.user_password
+        }
+    
+    def __str__(self):
+        return "AuthenticationData(" + json.dumps(self.to_dict(), indent=4) + ")"
 
 class Process(Enum):
     SIMPLE = 1
@@ -117,7 +152,7 @@ class PERegistrationData:
         self.description = description
         self.pe_source_code = pe_source_code
         self.pe_imports = create_import_string(pe_source_code)
-
+        
     def to_dict(self):
         return {
             "peName": self.pe_name,
@@ -167,7 +202,8 @@ class WorkflowRegistrationData:
             "workflowName": self.workflow_name,
             "workflowCode": self.workflow_code,
             "entryPoint": self.entry_point,
-            "description": self.description,
+            "description": self.description
+            
         }
 
     def __str__(self):
@@ -187,9 +223,10 @@ class ExecutionData:
         resources:str 
     ):  
 
+        imports = ""
+
         if workflow_code is not None:
-            #create import string 
-            imports = ""
+            #create import string    
             for pe in workflow_code.getContainedObjects():
                 imports = imports + "," + create_import_string(inspect.getsource(pe.__class__))
         
@@ -244,25 +281,55 @@ class WebClient:
         None 
         #todo: implement 
     
-    def register_PE(self, pe_payload: PERegistrationData):
-
-        data = json.dumps(pe_payload.to_dict())
-        response = req.post(URL_REGISTER_PE, data=data,headers=headers)
+    def register_User(self,user_data: AuthenticationData):
+        data = json.dumps(user_data.to_dict())
+        response = req.post(URL_REGISTER_USER, data=data,headers=headers)
         response = json.loads(response.text)
-
+        
         if 'ApiError' in response.keys():
             logger.error(response['ApiError']['message'])
             return None 
+        else:
+            logger.info("Sucessfully registered user: " + response["userName"] )
+            return response["userName"]
+    
+    def login_User(self,user_data: AuthenticationData):
+        data = json.dumps(user_data.to_dict())
+        response = req.post(URL_LOGIN_USER, data=data,headers=headers)
+        response = json.loads(response.text)
+        
+        if 'ApiError' in response.keys():
+            logger.error(response['ApiError']['message'])
+            return None 
+        else:
+            globals.CLIENT_AUTH_ID = response["userName"]
+            logger.info("Sucessfully logged in: " + response["userName"])
+            return response["userName"]
+
+    def register_PE(self, pe_payload: PERegistrationData):
+
+        verify_login()
+
+        data = json.dumps(pe_payload.to_dict())
+        response = req.post(URL_REGISTER_PE.format(globals.CLIENT_AUTH_ID), data=data,headers=headers)
+        response = json.loads(response.text)
+
+        if 'ApiError' in response.keys():
+            logger.error(response['ApiError']['debugMessage'])
+            return None 
         else: 
-            logger.info("Successfully registered PE: " + response["peName"] + " ID:" + str(response["peId"]))
-            return int(response["peId"])
+            pe_id = response["peId"]
+            logger.info("Successfully registered PE " + response["peName"] + " with ID " + str(pe_id))
+            return int(pe_id)
        
     def register_Workflow(self, workflow_payload: WorkflowRegistrationData):
+
+        verify_login()
 
         workflow_dict = workflow_payload.to_dict()
         
         data = json.dumps(workflow_dict)
-        response = req.post(URL_REGISTER_WORKFLOW, data=data,headers=headers) #add workflow resources 
+        response = req.post(URL_REGISTER_WORKFLOW.format(globals.CLIENT_AUTH_ID), data=data,headers=headers) #add workflow resources 
         response = json.loads(response.text)
 
         if 'ApiError' in response.keys():
@@ -275,29 +342,31 @@ class WebClient:
             #Link PEs to Workflow 
             for pe_obj in workflow_payload.workflow_pes:
 
-                get_pe_url = URL_GET_PE_NAME + pe_obj.name 
+                get_pe_url = URL_GET_PE_NAME.format(globals.CLIENT_AUTH_ID) + pe_obj.name 
                 pe_res = req.get(url=get_pe_url)
                 pe_res = json.loads(pe_res.text)
 
-                #Check if exists 
+                #Check if exists or if belongs to someone else (register copy)
                 if 'ApiError' in pe_res.keys():
                     #register PE
                     data = PERegistrationData(pe=pe_obj)
                     pe_id = WebClient.register_PE(self,data)
                     #Link PE
-                    req.put(url=URL_LINK_PE_TO_WORKFLOW.format(workflow_id,pe_id))
+                    req.put(url=URL_LINK_PE_TO_WORKFLOW.format(globals.CLIENT_AUTH_ID,workflow_id,pe_id))
                 else:
-                    req.put(url=URL_LINK_PE_TO_WORKFLOW.format(workflow_id,pe_res["peId"]))
+                    req.put(url=URL_LINK_PE_TO_WORKFLOW.format(globals.CLIENT_AUTH_ID,workflow_id,pe_res["peId"]))
                     #Link PE to Workflow 
                     
-            logger.info("Successfully registered Workflow: " + response["workflowName"] + " ID:" + str(response["workflowId"]))
+            logger.info("Successfully registered Workflow: " + response["entryPoint"] + " ID:" + str(response["workflowId"]))
             return response["workflowId"]
 
     def run(self, execution_payload: ExecutionData):
 
+        verify_login()
+        
         data = json.dumps(execution_payload.to_dict())
 
-        response = req.post(url=URL_EXECUTE,data=data,headers=headers)
+        response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=headers)
 
         response = json.loads(response.text)
 
@@ -305,18 +374,22 @@ class WebClient:
             logger.error(response['ApiError']['message'])
             return None 
         else:   
+            result = response["result"]
             logger.info("Successfully executed workflow: ") #todo should print if successful 
-            return response["result"] 
+            logger.info(result)
+            return result
 
     def get_PE(self, pe: Union[int,str]):
 
+        verify_login()
+
         if isinstance(pe, str):
             
-            url = URL_GET_PE_NAME + pe
+            url = URL_GET_PE_NAME.format(globals.CLIENT_AUTH_ID) + pe
             
         elif isinstance(pe, int):
 
-            url = URL_GET_PE_ID + str(pe)
+            url = URL_GET_PE_ID.format(globals.CLIENT_AUTH_ID) + str(pe)
         else:
             assert 'invalid type'
 
@@ -328,20 +401,21 @@ class WebClient:
             return None 
 
         else: 
-
+            logger.info("Successfully retrieved PE " + response["peName"])
             peCode = response["peCode"]
             unpickled_result = pickle.loads(codecs.decode(peCode.encode(), "base64"))
             return unpickled_result
 
     def get_Workflow(self, workflow: Union[int,str]):
 
-        if isinstance(workflow, str):
-            
-            url = URL_GET_WORKFLOW_NAME + workflow
-            
-        if isinstance(workflow, int):
+        verify_login()
 
-            url = URL_GET_WORKFLOW_ID + str(workflow)
+        if isinstance(workflow, str): 
+            url = URL_GET_WORKFLOW_NAME.format(globals.CLIENT_AUTH_ID) + workflow
+
+        elif isinstance(workflow, int):
+
+            url = URL_GET_WORKFLOW_ID.format(globals.CLIENT_AUTH_ID) + str(workflow)
 
         response = req.get(url=url)
         response = json.loads(response.text)
@@ -351,20 +425,22 @@ class WebClient:
             return None 
 
         else: 
-
+            logger.info("Successfully retrieved Workflow " + response["entryPoint"])
             workflowCode = response["workflowCode"]
             unpickled_result: WorkflowGraph = pickle.loads(codecs.decode(workflowCode.encode(), "base64"))
             return unpickled_result
 
     def get_PEs_By_Workflow(self, workflow: Union[int,str]):
 
+        verify_login()
+
         if isinstance(workflow, str):
             
-            url = URL_GET_PE_BY_WORKFLOW_NAME + workflow
+            url = URL_GET_PE_BY_WORKFLOW_NAME.format(globals.CLIENT_AUTH_ID) + workflow
             
         if isinstance(workflow, int):
 
-            url = URL_GET_PE_BY_WORKFLOW_ID + str(workflow)
+            url = URL_GET_PE_BY_WORKFLOW_ID.format(globals.CLIENT_AUTH_ID) + str(workflow)
 
         response = req.get(url=url)
         response = json.loads(response.text)
@@ -373,7 +449,12 @@ class WebClient:
 
         for index, response in enumerate(response,start=1):
             pe_name = response['peName']
-            pe = "Result " + str(index) + ": " + "ID: " + str(response['peId']) + "\n" + "PE Name: " +pe_name + "\n" + "Description: " + response['description'] +"\n"
+            pe_desc = response['description']
+
+            if pe_desc is None:
+                pe_desc = "-"
+
+            pe = "Result " + str(index) + ": \n" + "ID: " + str(response['peId']) + "\n" + "PE Name: " + pe_name + "\n" + "Description: " + pe_desc +"\n"
             obj = pickle.loads(codecs.decode(response['peCode'].encode(), "base64"))
             print(pe)
 
@@ -383,13 +464,15 @@ class WebClient:
 
     def remove_PE(self,pe: Union[int,str]):
 
+        verify_login()
+
         if isinstance(pe, str):
             
-            url = URL_REMOVE_PE_NAME + pe
+            url = URL_REMOVE_PE_NAME.format(globals.CLIENT_AUTH_ID) + pe
             
         if isinstance(pe, int):
 
-            url = URL_REMOVE_PE_ID + str(pe)
+            url = URL_REMOVE_PE_ID.format(globals.CLIENT_AUTH_ID) + str(pe)
         
         response = req.delete(url=url)
         response = json.loads(response.text)
@@ -397,20 +480,19 @@ class WebClient:
         if response == 1:
             logger.info("Sucessfully removed PE: " + str(pe))
         else:
-            if isinstance(pe,str):
-                logger.error("Could not find PE '"+ pe +"' to remove")
-            else:
-                logger.error("Could not find PE with ID "+ str(pe) +" to remove")
+            logger.error(response['ApiError']['message'])
 
     def remove_Workflow(self,workflow:Union[int,str]):
 
+        verify_login()
+
         if isinstance(workflow, str):
             
-            url = URL_REMOVE_WORKFLOW_NAME + workflow
+            url = URL_REMOVE_WORKFLOW_NAME.format(globals.CLIENT_AUTH_ID) + workflow
             
         if isinstance(workflow, int):
 
-            url = URL_REMOVE_WORKFLOW_ID + str(workflow)
+            url = URL_REMOVE_WORKFLOW_ID.format(globals.CLIENT_AUTH_ID) + str(workflow)
         
         response = req.delete(url=url)
         response = json.loads(response.text)
@@ -418,16 +500,15 @@ class WebClient:
         if response == 1:
             logger.info("Sucessfully removed Workflow: " + str(workflow))
         else:
-            if isinstance(workflow,str):
-                logger.error("Could not find Workflow '"+ workflow +"' to remove")
-            else:
-                logger.error("Could not find Workflow with ID "+ str(workflow) +" to remove")
+            logger.error(response['ApiError']['message'])
 
     def search(self,search_payload: SearchData):
 
+        verify_login()
+
         search_dict = search_payload.to_dict()
 
-        url = URL_SEARCH.format(search_dict['search'],search_dict['searchType'])
+        url = URL_SEARCH.format(globals.CLIENT_AUTH_ID,search_dict['search'],search_dict['searchType'])
 
         response = req.get(url=url)
         response = json.loads(response.text)
@@ -435,8 +516,10 @@ class WebClient:
         return get_objects(response)
 
     def get_Registry(self):
+
+        verify_login()
         
-        url = URL_REGISTRY_ALL
+        url = URL_REGISTRY_ALL.format(globals.CLIENT_AUTH_ID)
 
         response = req.get(url=url)
         response = json.loads(response.text)

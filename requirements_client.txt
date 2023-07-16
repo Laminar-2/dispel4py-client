@@ -1,2 +1,9 @@
 typing-extensions == 3.10.0.0
 findimports
+tensorflow
+accelerate
+docarray
+pandas
+torch
+transformers
+tqdm

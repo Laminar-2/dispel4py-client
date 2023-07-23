@@ -1,5 +1,6 @@
 
 from dispel4py.workflow_graph import WorkflowGraph 
+from deep_learn_search import *
 from typing import Union
 from globals import *
 import globals
@@ -18,6 +19,7 @@ logging.basicConfig(format='%(message)s', level=logging.INFO)
 
 def verify_login():
 
+    #check for client login session 
     if globals.CLIENT_AUTH_ID == "None":
         logger.info("You must be logged-in to perform this operation.")
         exit()
@@ -71,6 +73,7 @@ def serialize_directory(path):
 
 def get_payload(code: any):
 
+    #serialize code
     pickled = codecs.encode(pickle.dumps(code), "base64").decode()
 
     return pickled
@@ -81,7 +84,7 @@ def get_objects(results):
 
     print("\nREGISTRY\n")
 
-    #todo:check if list is empty 
+    
     for index, result in enumerate(results,start=1):
 
         desc = result['description']
@@ -130,9 +133,7 @@ class Process(Enum):
     DYNAMIC = 3
 
 class PERegistrationData:
-    
-    #todo: Handle PE exceptions
-    #  
+     
     def __init__(
         self,
         *,
@@ -146,20 +147,25 @@ class PERegistrationData:
             pe_name = pe.__class__.__name__
             
         pe_source_code = inspect.getsource(pe.__class__)
+        pe_process_source_code = inspect.getsource(pe._process)
 
         self.pe_name = pe_name 
         self.pe_code = get_payload(pe)
-        self.description = description
+        self.description = generate_summary(pe_process_source_code)
         self.pe_source_code = pe_source_code
         self.pe_imports = create_import_string(pe_source_code)
+        self.code_embedding = np.array_str(encode(pe_process_source_code).numpy())
+        self.desc_embedding = np.array_str(encode(self.description).numpy())
         
     def to_dict(self):
         return {
             "peName": self.pe_name,
             "peCode": self.pe_code,
-            "sourceCode":self.pe_source_code, 
+            "sourceCode": self.pe_source_code, 
             "description": self.description,
-            "peImports": self.pe_imports
+            "peImports": self.pe_imports,
+            "codeEmbedding": self.code_embedding,
+            "descEmbedding": self.desc_embedding
         }
 
     def __str__(self):
@@ -170,10 +176,10 @@ class WorkflowRegistrationData:
     def __init__(
         self,
         *,
-        workflow: any, #todo change?
+        workflow: any, 
         workflow_name: str = None,
         workflow_code: str = None,
-        workflow_pes = None, #todo give type 
+        workflow_pes = None,  
         entry_point: str = None,
         description: str = None
     ):
@@ -183,7 +189,6 @@ class WorkflowRegistrationData:
             workflow_code = get_payload(workflow)
             
 
-        #todo: Handle PE exceptions 
 
         workflow_pes = workflow.getContainedObjects() 
        
@@ -193,9 +198,6 @@ class WorkflowRegistrationData:
         self.description = description
         self.workflow_pes = workflow_pes
 
-        #todo:remove
-        #print(json.dumps(self.workflow_code))
-        #exit()
 
     def to_dict(self):
         return {
@@ -260,7 +262,7 @@ class SearchData:
         self,
         *,
         search: str, 
-        search_type: bool,
+        search_type: bool
        
     ):
         self.search = search 
@@ -279,7 +281,6 @@ class WebClient:
 
     def __init__(): 
         None 
-        #todo: implement 
     
     def register_User(self,user_data: AuthenticationData):
         data = json.dumps(user_data.to_dict())
@@ -346,7 +347,6 @@ class WebClient:
                 pe_res = req.get(url=get_pe_url)
                 pe_res = json.loads(pe_res.text)
 
-                #Check if exists or if belongs to someone else (register copy)
                 if 'ApiError' in pe_res.keys():
                     #register PE
                     data = PERegistrationData(pe=pe_obj)
@@ -375,7 +375,7 @@ class WebClient:
             return None 
         else:   
             result = response["result"]
-            logger.info("Successfully executed workflow: ") #todo should print if successful 
+            logger.info("Successfully executed workflow: ")
             logger.info(result)
             return result
 
@@ -515,6 +515,18 @@ class WebClient:
 
         return get_objects(response)
 
+    def search_similarity(self, search_payload: SearchData, query_type):
+
+        search_dict = search_payload.to_dict()
+
+        url = URL_PE_ALL.format(globals.CLIENT_AUTH_ID)
+
+        response = req.get(url=url)
+        response = json.loads(response.text)
+
+        return similarity_search(search_dict['search'], response, query_type)
+
+
     def get_Registry(self):
 
         verify_login()
@@ -525,5 +537,3 @@ class WebClient:
         response = json.loads(response.text)
 
         return get_objects(response)
-
-

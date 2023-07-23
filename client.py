@@ -3,12 +3,13 @@ from globals import *
 from dispel4py.base import *
 from dispel4py.workflow_graph import WorkflowGraph
 from dispel4py.visualisation import display
-#from typing import Literal, get_args
 from typing_extensions import Literal, get_args
 from web_client import WebClient
 from typing import Union
 
 _TYPES = Literal["pe", "workflow", "both"]
+
+_QUERY_TYPES = Literal["text","code"]
  
 class d4pClient:
 
@@ -110,7 +111,7 @@ class d4pClient:
                 workflow = workflow,
                 entry_point = workflow_name,
                 description = description
-            ) 
+            )   
 
         return WebClient.register_Workflow(self,data)
 
@@ -216,7 +217,7 @@ class d4pClient:
 
         return workflow_obj
     
-    def search_Registry(self, search:str, search_type:_TYPES = "both"):
+    def search_Registry(self, search:str, search_type:_TYPES = "both", query_type:_QUERY_TYPES = "text"):
         """Search registry for workflow 
         
         Parameters
@@ -238,11 +239,16 @@ class d4pClient:
 
         data = SearchData(
             search= search,
-            search_type = search_type
+            search_type = search_type,
         )
 
-        logger.info("Searched for " + search)
-        return WebClient.search(self,data)
+        logger.info("Searched for \"" + search + "\"")
+
+        #Performing search similarity for PEs
+        if search_type == "pe": 
+            return WebClient.search_similarity(self,data,query_type)
+        else:
+            return WebClient.search(self,data)
     
     def describe(self, obj:any):
         """Describe PE or Workflow object 
@@ -294,10 +300,31 @@ class d4pClient:
         WebClient.remove_Workflow(self,workflow)
 
     def get_PEs_By_Workflow(self,workflow:Union[str,int]):
+
+        """Retrieve PEs in Workflow 
+
+        Parameters 
+        ----------
+        workflow: str/int
+            Name or ID of Workflow to retrieve
+         
+        Return 
+        -------
+        pes: list 
+            List of PEs
+        """
         
         return WebClient.get_PEs_By_Workflow(self,workflow)
 
     def get_Registry(self):
+
+        """Retrieve Registry 
+
+        Return 
+        -------
+        registry: list 
+            List of PEs/Workflows
+        """
 
         return WebClient.get_Registry(self)
     

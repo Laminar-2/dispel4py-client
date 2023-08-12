@@ -151,11 +151,16 @@ class PERegistrationData:
 
         self.pe_name = pe_name 
         self.pe_code = get_payload(pe)
-        self.description = generate_summary(pe_process_source_code)
+
+        if description:
+            self.description = description
+        else:
+            self.description = generate_summary(pe_process_source_code)
+
         self.pe_source_code = pe_source_code
         self.pe_imports = create_import_string(pe_source_code)
-        self.code_embedding = np.array_str(encode(pe_process_source_code).numpy())
-        self.desc_embedding = np.array_str(encode(self.description).numpy())
+        self.code_embedding = np.array_str(encode(pe_process_source_code,2).numpy())
+        self.desc_embedding = np.array_str(encode(self.description,1).numpy())
         
     def to_dict(self):
         return {
@@ -363,8 +368,10 @@ class WebClient:
     def run(self, execution_payload: ExecutionData):
 
         verify_login()
-        
+
         data = json.dumps(execution_payload.to_dict())
+
+        #print(data)
 
         response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=headers)
 
@@ -525,7 +532,6 @@ class WebClient:
         response = json.loads(response.text)
 
         return similarity_search(search_dict['search'], response, query_type)
-
 
     def get_Registry(self):
 

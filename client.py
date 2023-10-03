@@ -6,6 +6,7 @@ from dispel4py.visualisation import display
 from typing_extensions import Literal, get_args
 from web_client import WebClient
 from typing import Union
+import os
 
 _TYPES = Literal["pe", "workflow", "both"]
 
@@ -17,7 +18,10 @@ class d4pClient:
     and server services"""
 
     def __init__(self):
-        None
+        user_name      = os.getenv('LAMINAR_USERNAME')
+        user_password  = os.getenv('LAMINAR_PASSWORD')
+        if user_name is not None and user_password is not None:
+            self.login(user_name, user_password)
     
     def register(self, user_name:str, user_password:str):
         """ Register a user with the Registry service 

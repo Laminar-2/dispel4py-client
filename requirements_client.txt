@@ -1,11 +1,11 @@
 typing-extensions == 3.10.0.0
-findimports
-tensorflow
-accelerate
-docarray
-pandas
-torch
-transformers
-tqdm
-scikit-learn
-easydict
+findimports == 2.3.0
+tensorflow == 2.14.0
+accelerate == 0.23.0
+docarray == 0.21.1
+pandas == 1.3.5
+torch == 2.0.1
+transformers == 4.33.2
+tqdm == 4.66.1
+scikit-learn == 1.3.1
+easydict == 1.10

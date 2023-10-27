@@ -2,7 +2,7 @@ from dispel4py.base import *
 
 CLIENT_AUTH_ID: str = "None"
 
-BASE_URL_REGISTER: str = "http://localhost:8080/registry/{}"
+BASE_URL_REGISTER: str = "http://gorman.cs.st-andrews.ac.uk:8080/registry/{}"
 
 URL_REGISTRY_ALL: str = BASE_URL_REGISTER + "/all"
 
@@ -34,18 +34,18 @@ URL_REMOVE_WORKFLOW_ID: str = BASE_URL_REGISTER + "/workflow/remove/id/"
 
 URL_LINK_PE_TO_WORKFLOW: str = BASE_URL_REGISTER + "/workflow/{}/pe/{}"
 
-URL_EXECUTE: str = "http://localhost:8080/execution/{}/run"
+URL_EXECUTE: str = "http://gorman.cs.st-andrews.ac.uk:8080/execution/{}/run"
 
-URL_REGISTER_USER: str = "http://localhost:8080/auth/register"
+URL_REGISTER_USER: str = "http://gorman.cs.st-andrews.ac.uk:8080/auth/register"
 
-URL_LOGIN_USER: str =  "http://localhost:8080/auth/login"
+URL_LOGIN_USER: str =  "http://gorman.cs.st-andrews.ac.uk:8080/auth/login"
 
 URL_SEARCH: str = BASE_URL_REGISTER + "/search/{}/type/{}"
 
 PE_TYPES = (BasePE,IterativePE,ProducerPE,ConsumerPE,SimpleFunctionPE,CompositePE,GenericPE)
 
 headers = { 
-            'Content-type':'application/json', 
+            'Content-Type':'application/json', 
             'Accept':'application/json'
           }
 

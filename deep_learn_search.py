@@ -7,6 +7,8 @@ import cloudpickle as pickle
 import codecs
 from transformers import pipeline, AutoModel, AutoTokenizer
 from transformers import RobertaTokenizer, T5ForConditionalGeneration
+from transformers import logging
+logging.disable_default_handler()
 
 model_text_to_code = pipeline(
     model="Lazyhope/RepoSim",

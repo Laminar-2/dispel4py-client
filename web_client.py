@@ -1,4 +1,3 @@
-
 from dispel4py.workflow_graph import WorkflowGraph 
 from deep_learn_search import *
 from typing import Union
@@ -15,7 +14,8 @@ from enum import Enum
 import os 
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(message)s', level=logging.INFO) 
+#logger.setLevel(logging.FATAL)
+logging.basicConfig(format='%(message)s', level=logging.FATAL) 
 
 def verify_login():
 
@@ -84,9 +84,7 @@ def get_objects(results):
 
     print("\nREGISTRY\n")
 
-    
     for index, result in enumerate(results,start=1):
-
         desc = result['description']
 
         if desc is None:
@@ -318,15 +316,18 @@ class WebClient:
 
         data = json.dumps(pe_payload.to_dict())
         response = req.post(URL_REGISTER_PE.format(globals.CLIENT_AUTH_ID), data=data,headers=headers)
-        response = json.loads(response.text)
+        if (response.ok):
+            response = json.loads(response.text)
 
-        if 'ApiError' in response.keys():
-            logger.error(response['ApiError']['debugMessage'])
-            return None 
-        else: 
-            pe_id = response["peId"]
-            logger.info("Successfully registered PE " + response["peName"] + " with ID " + str(pe_id))
-            return int(pe_id)
+            if 'ApiError' in response.keys():
+                logger.error(response['ApiError']['debugMessage'])
+                return None 
+            else:
+                pe_id = response["peId"]
+                logger.info("Successfully registered PE " + response["peName"] + " with ID " + str(pe_id))
+                return int(pe_id)
+        else:
+            logging.error(f"Failed to register PE {pe_payload.pe_name}")
        
     def register_Workflow(self, workflow_payload: WorkflowRegistrationData):
 
@@ -518,9 +519,14 @@ class WebClient:
         url = URL_SEARCH.format(globals.CLIENT_AUTH_ID,search_dict['search'],search_dict['searchType'])
 
         response = req.get(url=url)
-        response = json.loads(response.text)
-
-        return get_objects(response)
+        if (response.ok):
+            if (response.text):
+                response = json.loads(response.text)
+                return get_objects(response)
+            else:
+                return []
+        logger.error(response.reason)
+        return None
 
     def search_similarity(self, search_payload: SearchData, query_type):
 

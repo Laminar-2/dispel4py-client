@@ -53,14 +53,14 @@ class LaminarCLI(cmd.Cmd):
             args = vars(parser.parse_args(shlex.split(arg)))
             try:
                 id = int(args["identifier"])
-                inputVal = args["input"] if args["rawinput"] else ast.literal_eval(args["input"])
+                inputVal = args["input"] if args["rawinput"] or args["input"] is None else ast.literal_eval(args["input"])
                 feedback = client.run(id, input=inputVal)
                 if (feedback):
                     print(feedback)
                 else:
                     print(f"No workflow is registered with ID {args[0]}")
             except:
-                inputVal = args["input"] if args["rawinput"] else ast.literal_eval(args["input"])
+                inputVal = args["input"] if args["rawinput"] or args["input"] is None else ast.literal_eval(args["input"])
                 feedback = client.run(args["identifier"], input=inputVal)
                 if (feedback):
                     print(feedback)

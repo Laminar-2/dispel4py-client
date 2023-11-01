@@ -68,6 +68,17 @@ class d4pClient:
         )
 
         return WebClient.login_User(self,data)
+    
+    def get_login(self):
+        """Returns the username of the current user, or None if no user is logged in
+
+        Return
+        ------
+        user_name: str | None
+            Username
+        """
+
+        return globals.CLIENT_AUTH_ID if globals.CLIENT_AUTH_ID != "None" else None
      
     def register_PE(self,pe: PE_TYPES,description:str=None):
 

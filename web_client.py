@@ -223,8 +223,6 @@ class ExecutionData:
         workflow_name: str,
         workflow_code: WorkflowGraph, 
         input: any,
-        process: Process,
-        args: any,
         resources:str 
     ):  
 
@@ -239,8 +237,6 @@ class ExecutionData:
         self.workflow_name = workflow_name 
         self.input = get_payload(input)
         self.workflow_code = get_payload(workflow_code)
-        self.args = get_payload(args)
-        self.process = process.value
         self.resources = serialize_directory(resources)
         self.imports = imports
      
@@ -250,8 +246,6 @@ class ExecutionData:
             "workflowName": self.workflow_name,
             "workflowCode": self.workflow_code,
             "inputCode": self.input,
-            "process": self.process,
-            "args": self.args,
             "resources": self.resources,
             "imports": self.imports
         }

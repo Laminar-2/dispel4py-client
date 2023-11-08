@@ -130,7 +130,7 @@ class d4pClient:
 
         return WebClient.register_Workflow(self,data)
 
-    def run(self,workflow:Union[str,int,WorkflowGraph],input=None,process=Process.SIMPLE,args=None,resources:bool=False):
+    def run(self,workflow:Union[str,int,WorkflowGraph],input=None,resources:bool=False):
 
         """Execute a Workflow with the client service 
 
@@ -140,8 +140,6 @@ class d4pClient:
                 Workflow to execute 
         input: any 
                 Input to execute 
-        process: Process (Simple/Multi/Dynamic) 
-                Execution method
         resources: bool 
                 If require resources for workflow execution 
         Return 
@@ -166,9 +164,6 @@ class d4pClient:
             #todo do something
             None
 
-        if args is None and (process == 2 or process == 3):
-            assert 'Must provide ''args'' for Multi\Dynamic process'
-
         if resources is True: 
             resources_path = "resources/"
         else: 
@@ -179,8 +174,6 @@ class d4pClient:
             workflow_name = workflow_name,
             workflow_code = workflow_code,
             input = input,
-            process = process,
-            args = args,
             resources = resources_path
         )
         

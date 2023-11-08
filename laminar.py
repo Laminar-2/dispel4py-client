@@ -58,14 +58,14 @@ class LaminarCLI(cmd.Cmd):
                 if (feedback):
                     print(feedback)
                 else:
-                    print(f"No workflow is registered with ID {args[0]}")
+                    print(f"No workflow is registered with ID {id}")
             except:
                 inputVal = args["input"] if args["rawinput"] or args["input"] is None else ast.literal_eval(args["input"])
                 feedback = client.run(args["identifier"], input=inputVal)
                 if (feedback):
                     print(feedback)
                 else:
-                    print(f"No workflow is registered with name {args[0]}")
+                    print(f"No workflow is registered with name {args['identifier']}")
         except argparse.ArgumentError as e:
             print(e.message.replace("laminar.py", "run"))
         

@@ -7,10 +7,12 @@ import shlex
 import ast
 from typing import IO
 import pwinput
+import imp
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from client import d4pClient
+from dispel4py.base import GenericPE, WorkflowGraph
 
 client = d4pClient()
 
@@ -72,6 +74,38 @@ class LaminarCLI(cmd.Cmd):
     
     def help_run(self):
         print("Runs a workflow in the registry based on the provided name or ID")
+
+    def do_register(self, arg):
+        parser = CustomArgumentParser(exit_on_error=False)
+        parser.add_argument("filepath")
+        try:
+            args = vars(parser.parse_args(shlex.split(arg)))
+            try: 
+                mod = imp.load_source('laminar_workflow', args["filepath"])
+                pes = {}
+                workflows = {}
+                for var in dir(mod):
+                    attr = getattr(mod, var)
+                    if isinstance(attr, GenericPE):
+                        pes.update({var: attr})
+                    if isinstance(attr, WorkflowGraph):
+                        workflows.update({var: attr})
+                if len(pes) == 0 and len(workflows) == 0:
+                    print("Could not find any PEs or Workflows")
+                    return
+                print("\tFound PEs")
+                for key in pes:
+                    print(f"\t{key} - {type(pes[key]).__name__}")
+                print("\tFound workflows")
+                for key in workflows:
+                    print(f"\t{key} - {type(workflows[key]).__name__}")
+                
+            except FileNotFoundError:
+                print(f"Could not find file at {args['filepath']}")
+            except SyntaxError:
+                print(f"Target file has invalid python syntax")
+        except argparse.ArgumentError as e:
+            print(e.message.replace("laminar.py", "register"))
 
     def do_quit(self, arg):
         sys.exit(0)

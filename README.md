@@ -31,13 +31,40 @@ dispel4py simple dispel4py.examples.graph_testing.word_count -i 10
 Install client modules
 ```
 pip install -r requirements_client.txt
+
+Enter target server URL into config.ini
 ```
 Run test client 
 ```
 python CLIENT_EXAMPLES\<file>
 ```
 
+## How to use the laminar CLI
 
+Run the CLI application
+```
+python laminar.py
+```
+
+### Register workflows and PEs
+Within the CLI register all workflows and PEs instantiated within a file using
+```
+(laminar) register <filename>
+```
+The name will be based off of the variable name used within the file and the description will be taken from the docstring
+
+### Search the registry
+Within the CLI you can search for stored workflows and PEs using
+```
+(laminar) search [workflow|pe|both] <search term>
+```
+
+### Run workflows
+Within the CLI you can run workflows registered to the registry with
+```
+(laminar) run <workflow name or id> 
+```
+There are a couple of optional flags including `-i <input>` which provides the workflow with input and `--rawinput` which parses the input as a raw string rather than attempting to parse it as a python object
 
 
 

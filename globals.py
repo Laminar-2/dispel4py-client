@@ -8,6 +8,8 @@ CLIENT_AUTH_ID: str = "None"
 
 try:
   BASE_URL: str = config['CONFIGURATION']['SERVER_URL']
+  if len(BASE_URL) < 1:
+    raise "No base URL error"
 except:
   print("ERROR: Server URL not configured - check your configuration file")
   exit(1)

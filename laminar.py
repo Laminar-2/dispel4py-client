@@ -127,6 +127,9 @@ class LaminarCLI(cmd.Cmd):
         except argparse.ArgumentError as e:
             print(e.message.replace("laminar.py", "register"))
 
+    def help_register(self):
+        print("Registers all workflows and PEs instantiated within a given file input")
+
     def do_quit(self, arg):
         sys.exit(0)
 

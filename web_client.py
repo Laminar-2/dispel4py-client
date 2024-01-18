@@ -14,7 +14,6 @@ from enum import Enum
 import os 
 
 logger = logging.getLogger(__name__)
-#logger.setLevel(logging.FATAL)
 logging.basicConfig(format='%(message)s', level=logging.FATAL) 
 
 def verify_login():

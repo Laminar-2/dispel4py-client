@@ -10,7 +10,7 @@ import pwinput
 import imp
 
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # gets the libraries to write less garbage to the terminal
 from client import d4pClient
 from dispel4py.base import GenericPE, WorkflowGraph
 
@@ -81,7 +81,7 @@ class LaminarCLI(cmd.Cmd):
         try:
             args = vars(parser.parse_args(shlex.split(arg)))
             try: 
-                mod = imp.load_source('laminar_workflow', args["filepath"])
+                mod = imp.load_source('__main__', args["filepath"])
                 pes = {}
                 workflows = {}
                 for var in dir(mod):
@@ -93,12 +93,32 @@ class LaminarCLI(cmd.Cmd):
                 if len(pes) == 0 and len(workflows) == 0:
                     print("Could not find any PEs or Workflows")
                     return
-                print("\tFound PEs")
+                if len(pes) > 0:
+                    print("Found PEs")
                 for key in pes:
-                    print(f"\t{key} - {type(pes[key]).__name__}")
-                print("\tFound workflows")
+                    print(f"• {key} - {type(pes[key]).__name__}", end=" ")
+                    docstring = pes[key].__doc__
+                    r = client.register_PE(pes[key], docstring)
+                    if r is None:
+                        print("(Exists)")
+                    else:
+                        print(f"(ID {r})")
+                if len(workflows) > 0:
+                    print("Found workflows")
                 for key in workflows:
-                    print(f"\t{key} - {type(workflows[key]).__name__}")
+                    print(f"• {key} - {type(workflows[key]).__name__}", end=" ")
+                    docstring = workflows[key].__doc__
+                    r = client.register_Workflow(workflows[key], key, docstring)
+                    if r is None:
+                        print("(Exists)")
+                    else:
+                        print(f"(ID {r})")
+                for var in dir(mod):
+                    attr = getattr(mod, var)
+                    if isinstance(attr, GenericPE):
+                        setattr(mod, var, None)
+                    if isinstance(attr, WorkflowGraph):
+                        setattr(mod, var, None)
                 
             except FileNotFoundError:
                 print(f"Could not find file at {args['filepath']}")
@@ -116,6 +136,13 @@ class LaminarCLI(cmd.Cmd):
 def parseArgs(arg:str):
     return arg.split()
 
+def clearTerminal():
+    if os.name == "nt":
+        os.system('cls')
+    else:
+        os.system('clear')
+
+clearTerminal()
 
 # Start
 if client.get_login() is not None:
@@ -124,6 +151,8 @@ else:
     username = input("Username: ")
     password = pwinput.pwinput("Password: ")
     client.login(username, password)
+
+clearTerminal()
 
 cli = LaminarCLI()
 cli.cmdloop()

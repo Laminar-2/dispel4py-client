@@ -367,9 +367,18 @@ class WebClient:
 
         #print(data)
 
-        response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=headers)
+        response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=headers,stream=True)
 
-        response = json.loads(response.text)
+        for line in response.iter_lines():
+            if line:
+                info = json.loads(line)
+                if 'ApiError' in info.keys():
+                    logger.error(info['ApiError']['message'])
+                    return None
+                else:
+                    print(info)
+
+        """response = json.loads(response.text)
 
         if 'ApiError' in response.keys():
             logger.error(response['ApiError']['message'])
@@ -378,7 +387,7 @@ class WebClient:
             result = response["result"]
             logger.info("Successfully executed workflow: ")
             logger.info(result)
-            return result
+            return result"""
 
     def get_PE(self, pe: Union[int,str]):
 

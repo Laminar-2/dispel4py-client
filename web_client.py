@@ -366,17 +366,35 @@ class WebClient:
         data = json.dumps(execution_payload.to_dict())
 
         #print(data)
+        customHeaders = headers.copy()
+        customHeaders['Accept'] = "text/event-stream"
 
-        response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=headers,stream=True)
+        response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=customHeaders,stream=True)
 
-        for line in response.iter_lines():
+        try:
+            for line in response.iter_lines():
+                line = line.decode('utf-8')
+                if line:
+                    if line[:5] == "data:":
+                        data = json.loads(line[5:])
+                        if "response" in data.keys():
+                            print(data["response"])
+                        elif "result" in data.keys():
+                            print("Output: " + data["result"])
+                            return data["result"]
+        except Exception as e:
+            print("Error: " + str(e))
+            return True
+
+        """for line in response.iter_lines():
             if line:
                 info = json.loads(line)
                 if 'ApiError' in info.keys():
+                    print(info['ApiError']['message'])
                     logger.error(info['ApiError']['message'])
                     return None
                 else:
-                    print(info)
+                    print(info)"""
 
         """response = json.loads(response.text)
 

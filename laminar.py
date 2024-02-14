@@ -151,9 +151,10 @@ clearTerminal()
 if client.get_login() is not None:
     print(f"Logged in as {client.get_login()}")
 else:
-    username = input("Username: ")
-    password = pwinput.pwinput("Password: ")
-    client.login(username, password)
+    while client.get_login() is None:
+        username = input("Username: ")
+        password = pwinput.pwinput("Password: ")
+        client.login(username, password)
 
 clearTerminal()
 

@@ -50,21 +50,23 @@ class LaminarCLI(cmd.Cmd):
         parser = CustomArgumentParser(exit_on_error=False)
         parser.add_argument("identifier")
         parser.add_argument("--rawinput", action="store_true")
+        parser.add_argument("-v", "--verbose", action="store_true")
         parser.add_argument("-i", "--input", dest="input", required=False)
+
         try:
             args = vars(parser.parse_args(shlex.split(arg)))
             try:
                 id = int(args["identifier"])
                 inputVal = args["input"] if args["rawinput"] or args["input"] is None else ast.literal_eval(args["input"])
-                feedback = client.run(id, input=inputVal)
+                feedback = client.run(id, input=inputVal, verbose=args["verbose"])
                 if (feedback):
                     print(feedback)
                 else:
                     print(f"No workflow is registered with ID {id}")
             except:
                 inputVal = args["input"] if args["rawinput"] or args["input"] is None else ast.literal_eval(args["input"])
-                feedback = client.run(args["identifier"], input=inputVal)
-                if (feedback):
+                feedback = client.run(args["identifier"], input=inputVal, verbose=args["verbose"])
+                if (feedback is not None):
                     print(feedback)
                 else:
                     print(f"No workflow is registered with name {args['identifier']}")
@@ -139,13 +141,13 @@ class LaminarCLI(cmd.Cmd):
 def parseArgs(arg:str):
     return arg.split()
 
-def clearTerminal():
+def clear_terminal():
     if os.name == "nt":
         os.system('cls')
     else:
         os.system('clear')
 
-clearTerminal()
+clear_terminal()
 
 # Start
 if client.get_login() is not None:
@@ -155,8 +157,10 @@ else:
         username = input("Username: ")
         password = pwinput.pwinput("Password: ")
         client.login(username, password)
+        if client.get_login() is None:
+            print("Invalid login")
 
-clearTerminal()
+clear_terminal()
 
 cli = LaminarCLI()
 cli.cmdloop()

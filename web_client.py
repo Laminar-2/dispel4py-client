@@ -371,6 +371,7 @@ class WebClient:
 
         response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=customHeaders,stream=True)
         if not response.ok:
+            print(response.reason)
             return None
 
         try:
@@ -380,9 +381,23 @@ class WebClient:
                     if line[:5] == "data:":
                         data = json.loads(line[5:])
                         if "response" in data.keys() and verbose:
-                            print(str(data["response"]))
+                            print(str(data["response"]), end="")
                         elif "result" in data.keys():
                             return data["result"]
+                        elif "resources" in data.keys():
+                            resources: list[str] = data["resources"]
+                            print("Requested resources: " + str(resources))
+                            if len(resources) == 0:
+                                continue
+                            multipart_files: list = []
+                            for resource in resources:
+                                multipart_files.append(("files", open(resource, 'rb')))
+                            file_response = req.put(url=URL_RESOURCE.format(globals.CLIENT_AUTH_ID),files=multipart_files)
+                            print(file_response)
+                            for _, file in multipart_files:
+                                file.close()
+                        elif "error" in data.keys():
+                            print(str("Error: " + str(data["error"])))
         except Exception as e:
             print("Error: " + str(e))
             return True

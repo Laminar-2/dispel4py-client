@@ -48,6 +48,8 @@ URL_LINK_PE_TO_WORKFLOW: str = BASE_URL_REGISTER + "/workflow/{}/pe/{}"
 
 URL_EXECUTE: str = BASE_URL + "/execution/{}/run"
 
+URL_RESOURCE: str = BASE_URL + "/execution/{}/resource"
+
 URL_REGISTER_USER: str = BASE_URL + "/auth/register"
 
 URL_LOGIN_USER: str =  BASE_URL + "/auth/login"

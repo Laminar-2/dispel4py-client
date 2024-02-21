@@ -192,7 +192,7 @@ class WorkflowRegistrationData:
             
 
 
-        workflow_pes = workflow.getContainedObjects() 
+        workflow_pes = workflow.get_contained_objects()
        
         self.workflow_name = workflow_name 
         self.workflow_code = workflow_code 
@@ -222,21 +222,21 @@ class ExecutionData:
         workflow_name: str,
         workflow_code: WorkflowGraph, 
         input: any,
-        resources:str 
+        resources:list[str] 
     ):  
 
         imports = ""
 
         if workflow_code is not None:
             #create import string    
-            for pe in workflow_code.getContainedObjects():
+            for pe in workflow_code.get_contained_objects():
                 imports = imports + "," + create_import_string(inspect.getsource(pe.__class__))
         
         self.workflow_id = workflow_id 
         self.workflow_name = workflow_name 
         self.input = get_payload(input)
         self.workflow_code = get_payload(workflow_code)
-        self.resources = serialize_directory(resources)
+        self.resources = resources
         self.imports = imports
      
     def to_dict(self):
@@ -359,7 +359,7 @@ class WebClient:
             logger.info("Successfully registered Workflow: " + response["entryPoint"] + " ID:" + str(response["workflowId"]))
             return response["workflowId"]
 
-    def run(self, execution_payload: ExecutionData):
+    def run(self, execution_payload: ExecutionData, verbose=True):
 
         verify_login()
 
@@ -370,6 +370,8 @@ class WebClient:
         customHeaders['Accept'] = "text/event-stream"
 
         response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=customHeaders,stream=True)
+        if not response.ok:
+            return None
 
         try:
             for line in response.iter_lines():
@@ -377,35 +379,13 @@ class WebClient:
                 if line:
                     if line[:5] == "data:":
                         data = json.loads(line[5:])
-                        if "response" in data.keys():
-                            print(data["response"])
+                        if "response" in data.keys() and verbose:
+                            print(str(data["response"]))
                         elif "result" in data.keys():
-                            print("Output: " + data["result"])
                             return data["result"]
         except Exception as e:
             print("Error: " + str(e))
             return True
-
-        """for line in response.iter_lines():
-            if line:
-                info = json.loads(line)
-                if 'ApiError' in info.keys():
-                    print(info['ApiError']['message'])
-                    logger.error(info['ApiError']['message'])
-                    return None
-                else:
-                    print(info)"""
-
-        """response = json.loads(response.text)
-
-        if 'ApiError' in response.keys():
-            logger.error(response['ApiError']['message'])
-            return None 
-        else:   
-            result = response["result"]
-            logger.info("Successfully executed workflow: ")
-            logger.info(result)
-            return result"""
 
     def get_PE(self, pe: Union[int,str]):
 

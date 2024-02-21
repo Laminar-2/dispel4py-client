@@ -130,7 +130,7 @@ class d4pClient:
 
         return WebClient.register_Workflow(self,data)
 
-    def run(self,workflow:Union[str,int,WorkflowGraph],input=None,resources:bool=False):
+    def run(self,workflow:Union[str,int,WorkflowGraph],input=None,resources:list[str]=[],verbose=True):
 
         """Execute a Workflow with the client service 
 
@@ -140,8 +140,8 @@ class d4pClient:
                 Workflow to execute 
         input: any 
                 Input to execute 
-        resources: bool 
-                If require resources for workflow execution 
+        resources: list[str] 
+                The paths of any files or directories necessary for workflow execution 
         Return 
         -------
         result: str
@@ -163,21 +163,16 @@ class d4pClient:
         if input is None:
             #todo do something
             None
-
-        if resources is True: 
-            resources_path = "resources/"
-        else: 
-            resources_path = None
         
         data = ExecutionData(
             workflow_id = workflow_id,
             workflow_name = workflow_name,
             workflow_code = workflow_code,
             input = input,
-            resources = resources_path
+            resources = resources
         )
         
-        return WebClient.run(self,data)
+        return WebClient.run(self,data,verbose)
 
     def get_PE(self,pe:Union[str,int],describe:bool=False):
 

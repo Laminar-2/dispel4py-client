@@ -16,18 +16,7 @@ In order to run the application you need to create a new Python 3.10 enviroment
 conda create --name py10 python=3.10
 conda activate py10
 ```
-Install dispel4py 
-```
-git clone https://github.com/dispel4py2-0/dispel4py.git
-cd dispel4py
-pip install -r requirements.txt
-python setup.py install
-cd ..
-```
-Test dispel4py 
-```
-dispel4py simple dispel4py.examples.graph_testing.word_count -i 10
-```
+
 Install client modules
 ```
 pip install -r requirements_client.txt
@@ -64,6 +53,11 @@ Within the CLI you can run workflows registered to the registry with
 ```
 (laminar) run <workflow name or id> 
 ```
+Optional flags
+- -i <input> for providing the workflow with input
+- -r <resource> for providing a resource to send with the request
+- --rawinput parses input as a string rather than a python object
+- --verbose prints program output
 There are a couple of optional flags including `-i <input>` which provides the workflow with input and `--rawinput` which parses the input as a raw string rather than attempting to parse it as a python object
 
 

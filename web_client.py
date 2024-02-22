@@ -239,7 +239,7 @@ class ExecutionData:
         self.workflow_code = get_payload(workflow_code)
         self.resources = resources
         self.imports = imports
-        self.process = process
+        self.process = process.value
      
     def to_dict(self):
         return {

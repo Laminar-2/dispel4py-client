@@ -178,6 +178,18 @@ class d4pClient:
         )
         
         return WebClient.run(self,data,verbose)
+    
+    def run_multiprocess(self,workflow:Union[str,int,WorkflowGraph],input=None,resources:list[str]=[],verbose=True):
+        """
+            Alternative for client.run(process=Process.MULTI)
+        """
+        return self.run(self, workflow, input, resources, verbose, process=Process.MULTI)
+
+    def run_dynamic(self,workflow:Union[str,int,WorkflowGraph],input=None,resources:list[str]=[],verbose=True):
+        """
+            Alternative for client.run(process=Process.DYNAMIC)
+        """
+        return self.run(self, workflow, input, resources, verbose, process=Process.DYNAMIC)
 
     def get_PE(self,pe:Union[str,int],describe:bool=False):
 

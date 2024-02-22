@@ -130,7 +130,7 @@ class d4pClient:
 
         return WebClient.register_Workflow(self,data)
 
-    def run(self,workflow:Union[str,int,WorkflowGraph],input=None,resources:list[str]=[],verbose=True):
+    def run(self,workflow:Union[str,int,WorkflowGraph],input=None,process=Process.SIMPLE,resources:list[str]=[],verbose=True):
 
         """Execute a Workflow with the client service 
 
@@ -139,9 +139,13 @@ class d4pClient:
         workflow: int/str/WorkflowGraph
                 Workflow to execute 
         input: any 
-                Input to execute 
+                Input to execute
+        process: Process (Simple/Multi/Dynamic) 
+                Execution method
         resources: list[str] 
                 The paths of any files or directories necessary for workflow execution 
+        verbose: bool
+                Whether or not to print the outputs produced by the program
         Return 
         -------
         result: str
@@ -169,7 +173,8 @@ class d4pClient:
             workflow_name = workflow_name,
             workflow_code = workflow_code,
             input = input,
-            resources = resources
+            resources = resources,
+            process = process
         )
         
         return WebClient.run(self,data,verbose)

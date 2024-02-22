@@ -222,6 +222,7 @@ class ExecutionData:
         workflow_name: str,
         workflow_code: WorkflowGraph, 
         input: any,
+        process: int,
         resources:list[str] 
     ):  
 
@@ -238,6 +239,7 @@ class ExecutionData:
         self.workflow_code = get_payload(workflow_code)
         self.resources = resources
         self.imports = imports
+        self.process = process
      
     def to_dict(self):
         return {
@@ -246,7 +248,8 @@ class ExecutionData:
             "workflowCode": self.workflow_code,
             "inputCode": self.input,
             "resources": self.resources,
-            "imports": self.imports
+            "imports": self.imports,
+            "process": self.process
         }
 
     def __str__(self):
@@ -375,6 +378,7 @@ class WebClient:
             return None
 
         try:
+            parts = []
             for line in response.iter_lines():
                 line = line.decode('utf-8')
                 if line:
@@ -383,7 +387,11 @@ class WebClient:
                         if "response" in data.keys() and verbose:
                             print(str(data["response"]), end="")
                         elif "result" in data.keys():
+                            if len(parts) > 0:
+                                return parts
                             return data["result"]
+                        elif "part-result" in data.keys():
+                            parts.append(data["part-result"])
                         elif "resources" in data.keys():
                             resources: list[str] = data["resources"]
                             print("Requested resources: " + str(resources))

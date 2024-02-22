@@ -2,7 +2,6 @@ from dispel4py.base import ProducerPE, IterativePE, ConsumerPE
 from dispel4py.workflow_graph import WorkflowGraph
 import random
 from easydict import EasyDict as edict
-from easydict import EasyDict as edict
 from client import d4pClient,Process
 from dispel4py.new.dynamic_redis import process as dyn_process
 from dispel4py.new.simple_process import process as simple_process
@@ -22,7 +21,7 @@ class IsPrime(IterativePE):
         IterativePE.__init__(self)
     def _process(self, num):
         # this PE consumes one input and produces one output
-        print("before checking data - %s - is prime or not“" % num)
+        print("before checking data - %s - is prime or not\n" % num, end="")
         if all(num % i != 0 for i in range(2, num)):
             return num
 
@@ -31,7 +30,8 @@ class PrintPrime(ConsumerPE):
         ConsumerPE.__init__(self)
     def _process(self, num):
         # this PE consumes one input
-        print("the num %s is prime" % num)
+        print("the num %s is prime\n" % num, end="")
+
 
 producer = NumberProducer()
 isprime = IsPrime()
@@ -41,18 +41,19 @@ graph = WorkflowGraph()
 graph.connect(producer, 'output', isprime, 'input')
 graph.connect(isprime, 'output', printprime, 'input')
 
+
 client = d4pClient()
+client.login("username", "password") # Provide login details here
 
 #SIMPLE 
-#simple_process(graph, {producer: 5})
-#client.run(graph,input=5)
+#simple_process(graph, {producer: 100})
+client.run(graph,input=100)
 
 #MULTI 
-#multi_process(graph, {producer: 5}, edict({'num':5, 'iter': 5,'simple': False}))
-#client.run(graph,input=5,process=Process.MULTI,args=edict({'num':5, 'iter': 5,'simple': False}))
+#multi_process(graph, {producer: 100}, edict({'num':5, 'iter': 5,'simple': False}))
+client.run_multiprocess(graph,input=100)
 
 #REDIS 
-#producer.name='producer'
-#dyn_process(graph,{'producer': 5}, edict({'num':5,'iter':5, 'simple':False, 'redis_ip':'localhost', 'redis_port':'6379'}))
-client.run(graph,input=5,process=Process.DYNAMIC,args= edict({'num':5,'iter':5, 'simple':False, 'redis_ip':'localhost', 'redis_port':'6379'}))
+#dyn_process(graph,{producer: 100}, edict({'num':5,'iter':5, 'simple':False, 'redis_ip':'localhost', 'redis_port':'6379'}))
+client.run_dynamic(graph,input=100)
 

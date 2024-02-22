@@ -183,13 +183,13 @@ class d4pClient:
         """
             Alternative for client.run(process=Process.MULTI)
         """
-        return self.run(self, workflow, input, resources, verbose, process=Process.MULTI)
+        return self.run(workflow, input, Process.MULTI, resources, verbose)
 
     def run_dynamic(self,workflow:Union[str,int,WorkflowGraph],input=None,resources:list[str]=[],verbose=True):
         """
             Alternative for client.run(process=Process.DYNAMIC)
         """
-        return self.run(self, workflow, input, resources, verbose, process=Process.DYNAMIC)
+        return self.run(workflow, input, Process.DYNAMIC, resources, verbose)
 
     def get_PE(self,pe:Union[str,int],describe:bool=False):
 

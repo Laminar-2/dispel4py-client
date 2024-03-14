@@ -374,7 +374,7 @@ class WebClient:
 
         response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=customHeaders,stream=True)
         if not response.ok:
-            print(response.reason)
+            print(f"Error connecting to server: [{response.status_code}] {response.reason}")
             return None
 
         try:

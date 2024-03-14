@@ -11,7 +11,7 @@ import imp
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # gets the libraries to write less garbage to the terminal
-from client import d4pClient
+from client import d4pClient, Process
 from dispel4py.base import GenericPE, WorkflowGraph
 
 client = d4pClient()
@@ -53,20 +53,32 @@ class LaminarCLI(cmd.Cmd):
         parser.add_argument("-v", "--verbose", action="store_true")
         parser.add_argument("-i", "--input", dest="input", required=False)
         parser.add_argument("-r", "--resource", action="append", required=False)
+        parser.add_argument("--multi", action="store_true")
+        parser.add_argument("--dynamic", action="store_true")
 
         try:
             args = vars(parser.parse_args(shlex.split(arg)))
             try:
                 id = int(args["identifier"])
                 inputVal = args["input"] if args["rawinput"] or args["input"] is None else ast.literal_eval(args["input"])
-                feedback = client.run(id, input=inputVal, verbose=args["verbose"], resources=args["resource"])
+                runType = Process.SIMPLE
+                if args["multi"]:
+                    runType = Process.MULTI
+                elif args["dynamic"]:
+                    runType = Process.DYNAMIC
+                feedback = client.run(id, input=inputVal, verbose=args["verbose"], resources=args["resource"], process=runType)
                 if (feedback):
                     print(feedback)
                 else:
                     print(f"No workflow is registered with ID {id}")
             except:
                 inputVal = args["input"] if args["rawinput"] or args["input"] is None else ast.literal_eval(args["input"])
-                feedback = client.run(args["identifier"], input=inputVal, verbose=args["verbose"], resources=args["resource"])
+                runType = Process.SIMPLE
+                if args["multi"]:
+                    runType = Process.MULTI
+                elif args["dynamic"]:
+                    runType = Process.DYNAMIC
+                feedback = client.run(args["identifier"], input=inputVal, verbose=args["verbose"], resources=args["resource"], process=runType)
                 if (feedback is not None):
                     print(feedback)
                 else:

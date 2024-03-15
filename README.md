@@ -20,9 +20,9 @@ conda activate py10
 Install client modules
 ```
 pip install -r requirements_client.txt
-
-Enter target server URL into config.ini
 ```
+Enter target server URL into config.ini
+
 Run test client 
 ```
 python CLIENT_EXAMPLES\<file>

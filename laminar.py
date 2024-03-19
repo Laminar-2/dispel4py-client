@@ -58,6 +58,8 @@ class LaminarCLI(cmd.Cmd):
 
         try:
             args = vars(parser.parse_args(shlex.split(arg)))
+            if not isinstance(args["resource"], list):
+                args["resource"] = []
             try:
                 id = int(args["identifier"])
                 inputVal = args["input"] if args["rawinput"] or args["input"] is None else ast.literal_eval(args["input"])

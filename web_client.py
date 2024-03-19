@@ -375,7 +375,7 @@ class WebClient:
         response = req.post(url=URL_EXECUTE.format(globals.CLIENT_AUTH_ID),data=data,headers=customHeaders,stream=True)
         if not response.ok:
             print(f"Error connecting to server: [{response.status_code}] {response.reason}")
-            return None
+            return False
 
         try:
             parts = []
@@ -409,6 +409,7 @@ class WebClient:
         except Exception as e:
             print("Error: " + str(e))
             return True
+        return {}
 
     def get_PE(self, pe: Union[int,str]):
 

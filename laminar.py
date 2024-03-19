@@ -69,7 +69,7 @@ class LaminarCLI(cmd.Cmd):
                 elif args["dynamic"]:
                     runType = Process.DYNAMIC
                 feedback = client.run(id, input=inputVal, verbose=args["verbose"], resources=args["resource"], process=runType)
-                if (feedback):
+                if feedback is not False:
                     print(feedback)
                 else:
                     print(f"No workflow is registered with ID {id}")
@@ -81,7 +81,7 @@ class LaminarCLI(cmd.Cmd):
                 elif args["dynamic"]:
                     runType = Process.DYNAMIC
                 feedback = client.run(args["identifier"], input=inputVal, verbose=args["verbose"], resources=args["resource"], process=runType)
-                if (feedback is not None):
+                if feedback is not False:
                     print(feedback)
                 else:
                     print(f"No workflow is registered with name {args['identifier']}")
